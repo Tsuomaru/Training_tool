@@ -2,5 +2,10 @@
 __pycache__/
 *.pyc
 .env
-|}
+.env.*
 .vscode/
+GUI_backend/*.db
+
+# React
+node_modules/
+dist/

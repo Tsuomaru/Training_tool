@@ -1,0 +1,36 @@
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f5f5f5;
+  color: #222;
+}
+
+button {
+  padding: 10px 15px;
+  background-color: #ffffff;
+  color: #222;
+  border: 1px solid #aaa;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #e0e0e0;
+}
+
+input {
+  background-color: #ffffff;
+  color: #222;
+  border: 1px solid #aaa;
+  border-radius: 5px;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
