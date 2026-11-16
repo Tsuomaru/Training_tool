@@ -34,7 +34,8 @@ function ProjectOrganizer({ projects, onCreateProject, onOpenProject }) {
       </aside>
 
       <main className="organizer-main">
-        <h1>Project Organizer</h1>
+        <h1>Image-based Learning Tool</h1>
+      
 
         <input
           type="text"
