@@ -3,6 +3,9 @@ from flask import Flask, request, jsonify
 import sqlite3
 import uuid
 from pathlib import Path
+from PIL import Image, UnidentifiedImageError
+from io import BytesIO
+import base64
 
 app = Flask(__name__)
 

@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react'
+import TrainingWorkspace from './components/TrainingWorkspace'
 
 import ProjectOrganizer from './components/ProjectOrganizer'
 import './App.css'
@@ -61,21 +62,10 @@ function App() {
           onOpenProject={setCurrentProject}
         />
       ) : (
-        <div className="container">
-          <h2>Project: {currentProject.name}</h2>
-
-          <button onClick={() => setCurrentProject(null)}>
-            Back to Organizer
-          </button>
-
-          <h3>Image Viewer</h3>
-          <div className="image-viewer">
-            No image imported
-          </div>
-
-          <h3>Labels</h3>
-          <button>Add Label</button>
-        </div>
+        <TrainingWorkspace
+          project={currentProject}
+          onBack={() => setCurrentProject(null)}
+        />
       )}
     </>
   )
