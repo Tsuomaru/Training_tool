@@ -60,26 +60,30 @@ function TrainingWorkspace({ project, onBack }) {
         <button>Polygon</button>
         <button>Undo</button>
         <button>Redo</button>
+        <button>Verification Tool </button>
       </div>
 
       <div className="workspace-content">
 
-        <aside className="workspace-left">
-          <LabelPanel />
+       <aside className="workspace-left">
+            <LabelPanel />
 
-          <h3>Image Information</h3>
+            <h3>Image Information</h3>
             {imageData ? (
-            <div>
-                <p>File: {imageData.filename}</p>
-                <p>Width: {imageData.width} px</p>
-                <p>Height: {imageData.height} px</p>
-                <p>Bands: {imageData.bands.join(', ')}</p>
-            </div>
+                <div>
+                    <p>File: {imageData.filename}</p>
+                    <p>Width: {imageData.width} px</p>
+                    <p>Height: {imageData.height} px</p>
+                    <p>Bands: {imageData.bands}</p>
+                    <p>Data Type: {imageData.data_type?.join(', ')}</p>
+                    <p>CRS: {imageData.crs}</p>
+                    <p>Resolution: {imageData.resolution?.join(' × ')}</p>
+                </div>
             ) : (
-            <p>No image loaded</p>
+                <p>No image loaded</p>
             )}
         </aside>
-
+      
       <main className="workspace-viewer">
         {uploading ? (
             <p>Loading TIFF image...</p>
