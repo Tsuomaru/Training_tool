@@ -1,30 +1,24 @@
-
 import { useState, useEffect } from 'react'
 import TrainingWorkspace from './components/TrainingWorkspace'
-
 import ProjectOrganizer from './components/ProjectOrganizer'
 import './App.css'
 
 function App() {
   const [projects, setProjects] = useState([])
   const [currentProject, setCurrentProject] = useState(null)
+  const [currentPage, setCurrentPage] = useState('training')
+
   useEffect(() => {
     async function loadProjects() {
       try {
         const response = await fetch('/api/projects')
-
-        if (!response.ok) {
-          throw new Error('Failed to load projects')
-        }
-
+        if (!response.ok) throw new Error('Failed to load projects')
         const savedProjects = await response.json()
         setProjects(savedProjects)
-
       } catch (error) {
         console.error(error)
       }
     }
-
     loadProjects()
   }, [])
 
@@ -32,25 +26,23 @@ function App() {
     try {
       const response = await fetch('/api/projects', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name })
       })
-
-      if (!response.ok) {
-        throw new Error('Failed to create project')
-      }
-
+      if (!response.ok) throw new Error('Failed to create project')
       const newProject = await response.json()
-
       setProjects(previous => [...previous, newProject])
       setCurrentProject(newProject)
-
+      setCurrentPage('training')
     } catch (error) {
       console.error(error)
       alert('Could not save project')
     }
+  }
+
+  function openProject(project) {
+    setCurrentProject(project)
+    setCurrentPage('training')
   }
 
   return (
@@ -59,12 +51,18 @@ function App() {
         <ProjectOrganizer
           projects={projects}
           onCreateProject={createProject}
-          onOpenProject={setCurrentProject}
+          onOpenProject={openProject}
         />
       ) : (
         <TrainingWorkspace
           project={currentProject}
-          onBack={() => setCurrentProject(null)}
+          page={currentPage}
+          onBack={() => {
+            setCurrentProject(null)
+            setCurrentPage('training')
+          }}
+          onOpenVerification={() => setCurrentPage('verification')}
+          onBackToTraining={() => setCurrentPage('training')}
         />
       )}
     </>
