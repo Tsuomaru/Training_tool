@@ -164,3 +164,38 @@
 .workspace-viewer {
   overflow: hidden;
 }
+
+/* OpenLayers raster viewport */
+.openlayers-map {
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  position: relative;
+  background: #20252b;
+}
+
+/* Only the raster canvas is hue-rotated; vector annotations and map controls stay unchanged. */
+.openlayers-map.hue-inverted .raster-layer canvas {
+  filter: hue-rotate(180deg);
+}
+
+.workspace-toolbar button.tool-active {
+  background: #cfe3ff;
+  border-color: #3979c9;
+}
+
+.workspace-toolbar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.openlayers-map .ol-control button {
+  background-color: rgba(255, 255, 255, 0.85);
+  color: #222;
+}
+
+
+/* A single-band raster is grayscale and has no hue channel, so use a tonal negative. */
+.openlayers-map.tone-inverted .raster-layer canvas {
+  filter: invert(1);
+}

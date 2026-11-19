@@ -8,5 +8,6 @@ def read_tiff(file_path):
             "bands": image.count,
             "data_type": image.dtypes,
             "crs": str(image.crs),
-            "resolution": image.res
+            "resolution": image.res,
+            "bounds": [image.bounds.left, image.bounds.bottom, image.bounds.right, image.bounds.top]
         }

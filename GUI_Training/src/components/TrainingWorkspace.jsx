@@ -1,5 +1,6 @@
 import LabelPanel from './LabelPanel'
-import { useState } from 'react'
+import MapComponent from './MapComponent'
+import { useEffect, useRef, useState } from 'react'
 
 function TrainingWorkspace({
   project,
@@ -10,7 +11,16 @@ function TrainingWorkspace({
 }) {
   const [imageData, setImageData] = useState(null)
   const [uploading, setUploading] = useState(false)
+  const [activeTool, setActiveTool] = useState(null)
+  const [hueInverted, setHueInverted] = useState(false)
+  const [edgeDetected, setEdgeDetected] = useState(false)
+  const mapRef = useRef(null)
   const isVerificationPage = page === 'verification'
+
+  useEffect(() => {
+    // Do not carry an active drawing interaction between the two screens.
+    setActiveTool(null)
+  }, [isVerificationPage])
 
   async function handleImageUpload(event) {
     const file = event.target.files[0]
@@ -28,12 +38,23 @@ function TrainingWorkspace({
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Upload failed')
       setImageData(data)
+      setHueInverted(false)
+      setEdgeDetected(false)
+      setActiveTool(null)
     } catch (error) {
       alert(error.message)
     } finally {
       setUploading(false)
       event.target.value = ''
     }
+  }
+
+  function toggleHue() {
+    setHueInverted(current => !current)
+  }
+
+  function toggleEdgeDetection() {
+    setEdgeDetected(current => !current)
   }
 
   return (
@@ -57,11 +78,50 @@ function TrainingWorkspace({
             style={{ display: 'none' }}
           />
         </label>
-        <button>Point</button>
-        <button>Line</button>
-        <button>Polygon</button>
-        <button>Undo</button>
-        <button>Redo</button>
+        {isVerificationPage ? (
+          <button
+            className={hueInverted ? 'tool-active' : ''}
+            onClick={toggleHue}
+            disabled={!imageData}
+            aria-pressed={hueInverted}
+            title="Rotate the image hue by 180 degrees"
+          >
+            Color
+          </button>
+        ) : (
+          <button
+            className={activeTool === 'Point' ? 'tool-active' : ''}
+            onClick={() => setActiveTool(current => current === 'Point' ? null : 'Point')}
+            disabled={!imageData}
+            aria-pressed={activeTool === 'Point'}
+          >
+            Point
+          </button>
+        )}
+        {isVerificationPage ? (
+          <button
+            className={edgeDetected ? 'tool-active' : ''}
+            onClick={toggleEdgeDetection}
+            disabled={!imageData}
+            aria-pressed={edgeDetected}
+            title="Toggle Sobel edge detection on the image"
+          >Edge</button>
+        ) : (
+          <button
+            className={activeTool === 'Line' ? 'tool-active' : ''}
+            onClick={() => setActiveTool(current => current === 'Line' ? null : 'Line')}
+            disabled={!imageData}
+            aria-pressed={activeTool === 'Line'}
+          >Line</button>
+        )}
+        <button
+          className={activeTool === 'Polygon' ? 'tool-active' : ''}
+          onClick={() => setActiveTool(current => current === 'Polygon' ? null : 'Polygon')}
+          disabled={!imageData}
+          aria-pressed={activeTool === 'Polygon'}
+        >Polygon</button>
+        <button onClick={() => mapRef.current?.undo()} disabled={!imageData}>Undo</button>
+        <button onClick={() => mapRef.current?.redo()} disabled={!imageData}>Redo</button>
         {isVerificationPage ? (
           <button onClick={onBackToTraining}>Return to Main Project</button>
         ) : (
@@ -92,7 +152,13 @@ function TrainingWorkspace({
           {uploading ? (
             <p>Loading TIFF image...</p>
           ) : imageData ? (
-            <img src={imageData.preview} alt={imageData.filename} className="raster-preview" />
+            <MapComponent
+              ref={mapRef}
+              imageData={imageData}
+              hueInverted={isVerificationPage && hueInverted}
+              edgeDetected={isVerificationPage && edgeDetected}
+              activeTool={activeTool}
+            />
           ) : (
             <p>No TIFF image imported</p>
           )}
@@ -108,9 +174,11 @@ function TrainingWorkspace({
       </div>
 
       <footer className="workspace-status">
-        <span>Zoom: 100%</span>
-        <span>Pixel: —</span>
-        <span>Scale: —</span>
+        <span>Zoom: OpenLayers</span>
+        <span>{isVerificationPage && edgeDetected ? 'Display: Edge detection' : (activeTool ? `Tool: ${activeTool}` : 'Tool: Navigate')}</span>
+        <span>{isVerificationPage && hueInverted && Number(imageData?.bands) < 3
+          ? 'Grayscale image: tonal inversion (no hue channel)'
+          : (imageData?.crs || 'No projection')}</span>
       </footer>
     </div>
   )

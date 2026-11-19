@@ -88,7 +88,9 @@ def upload_tiff():
             return jsonify({
                 "filename": file.filename,
                 **info,
-                "preview": "data:image/png;base64," + encoded
+                "preview": "data:image/png;base64," + encoded,
+                "preview_width": preview_width,
+                "preview_height": preview_height
             })
 
         except Exception as error:
