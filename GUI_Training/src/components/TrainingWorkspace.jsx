@@ -147,7 +147,9 @@ function TrainingWorkspace({
           ) : (
             <p>No image loaded</p>
           )}
-          <BandPanel />
+          <BandPanel
+            imageData={imageData}
+          />
         </aside>
 
         <main className="workspace-viewer">

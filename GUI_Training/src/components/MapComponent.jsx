@@ -9,9 +9,13 @@ import Draw from 'ol/interaction/Draw.js'
 import { get as getProjection } from 'ol/proj.js'
 import Projection from 'ol/proj/Projection.js'
 import 'ol/ol.css'
+import TileLayer from 'ol/layer/Tile'
+// import TileLayer from 'ol/layer/WebGLTile.js'
+import GeoTIFF from 'ol/source/GeoTIFF.js'
 
 const MapComponent = forwardRef(function MapComponent(
-  { imageData, hueInverted = false, edgeDetected = false, activeTool = null },
+  { imageData, hueInverted = false, edgeDetected = false, activeTool = null,
+    bandSelection = {r:1,g:2,b:3} },
   ref
 ) {
   const mapElement = useRef(null)
@@ -81,6 +85,14 @@ const MapComponent = forwardRef(function MapComponent(
     rasterLayerRef.current = rasterLayer
     rasterExtentRef.current = extent
     rasterProjectionRef.current = projection
+
+    // Using GeoTIFF + TileLayer to allow band manupulation
+    // const source = new GeoTIFF({
+    //   source: [{ url: imageData.url }],
+    //   convertToRGB: 'auto',
+    //   transition: 0
+    // })
+    // const rasterLayer = new TileLayer({ source })
 
     const annotations = new VectorSource()
     const annotationLayer = new VectorLayer({ source: annotations })
