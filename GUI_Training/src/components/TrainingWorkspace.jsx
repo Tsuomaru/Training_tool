@@ -18,6 +18,7 @@ function TrainingWorkspace({
   const [activeTool, setActiveTool] = useState(null)
   const [hueInverted, setHueInverted] = useState(false)
   const [edgeDetected, setEdgeDetected] = useState(false)
+  const [labelClasses, setLabelClasses] = useState([])
 
   const mapRef = useRef(null)
 
@@ -176,29 +177,60 @@ function TrainingWorkspace({
         <main className="analysis-page">
           <h2>Project Analysis</h2>
           <p className="analysis-intro">
-            Review model performance and project metrics.
+            Review prediction metrics and performance for each label class.
           </p>
 
           <div className="analysis-grid">
-            <section className="analysis-card">
-              <h3>Accuracy</h3>
-              <p className="analysis-placeholder">
-                Accuracy scores will appear here when results are available.
-              </p>
-            </section>
-
-            <section className="analysis-card">
-              <h3>Charts</h3>
-              <p className="analysis-placeholder">
-                Charts will appear here when analysis data is connected.
-              </p>
+            <section className="analysis-card analysis-card-wide">
+              <h3>Overall performance</h3>
+              <div className="metric-grid">
+                <div className="metric-tile"><span>Overall accuracy</span><strong>NA</strong></div>
+                <div className="metric-tile"><span>Correct predictions</span><strong>NA</strong></div>
+                <div className="metric-tile"><span>Incorrect predictions</span><strong>NA</strong></div>
+                <div className="metric-tile"><span>Macro F1 score</span><strong>NA</strong></div>
+              </div>
             </section>
 
             <section className="analysis-card analysis-card-wide">
-              <h3>Additional Metrics</h3>
-              <p className="analysis-placeholder">
-                Confusion matrix, precision, recall, and other metrics can be displayed here.
-              </p>
+              <div className="analysis-card-heading">
+                <div>
+                  <h3>Class performance</h3>
+                  <p>Precision, recall, and F1 score for each label class.</p>
+                </div>
+                <span className="analysis-count">{labelClasses.length} {labelClasses.length === 1 ? 'class' : 'classes'}</span>
+              </div>
+              <div className="analysis-table-wrap">
+                <table className="analysis-table">
+                  <thead><tr><th scope="col">Class</th><th scope="col">Precision</th><th scope="col">Recall</th><th scope="col">F1 score</th></tr></thead>
+                  <tbody>
+                    {labelClasses.length ? labelClasses.map(labelClass => (
+                      <tr key={labelClass.id}><th scope="row">{labelClass.name}</th><td>NA</td><td>NA</td><td>NA</td></tr>
+                    )) : <tr><td className="analysis-empty-row" colSpan="4">Add label classes in the project or verification page to see them here.</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section className="analysis-card analysis-card-wide">
+              <div className="analysis-card-heading">
+                <div>
+                  <h3>Confusion matrix</h3>
+                  <p>Rows show actual classes; columns show predicted classes.</p>
+                </div>
+              </div>
+              {labelClasses.length ? (
+                <div className="confusion-matrix-wrap">
+                  <table className="confusion-matrix">
+                    <thead><tr><th className="matrix-corner" scope="col">Actual / Predicted</th>{labelClasses.map(labelClass => <th key={labelClass.id} scope="col">{labelClass.name}</th>)}</tr></thead>
+                    <tbody>{labelClasses.map(actualClass => (
+                      <tr key={actualClass.id}>
+                        <th scope="row">{actualClass.name}</th>
+                        {labelClasses.map(predictedClass => <td key={predictedClass.id} aria-label={`${actualClass.name} predicted as ${predictedClass.name}`}>—</td>)}
+                      </tr>
+                    ))}</tbody>
+                  </table>
+                </div>
+              ) : <p className="analysis-empty-note">Add label classes to create the confusion matrix axes.</p>}
             </section>
           </div>
         </main>
@@ -206,7 +238,7 @@ function TrainingWorkspace({
         <>
           <div className="workspace-content">
             <aside className="workspace-left">
-              <LabelPanel />
+              <LabelPanel classes={labelClasses} setClasses={setLabelClasses} />
 
               <section className="image-info">
                 <h3>Image Information</h3>

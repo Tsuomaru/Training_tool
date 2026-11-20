@@ -1,7 +1,6 @@
 import { useState } from 'react'
 
-function LabelPanel() {
-  const [classes, setClasses] = useState([])
+function LabelPanel({ classes, setClasses }) {
   const [newClassName, setNewClassName] = useState('')
   const [newSubclassName, setNewSubclassName] = useState('')
 
