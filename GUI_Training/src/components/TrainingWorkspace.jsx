@@ -1,3 +1,4 @@
+import BandPanel from './BandPanel'
 import LabelPanel from './LabelPanel'
 import MapComponent from './MapComponent'
 import { useEffect, useRef, useState } from 'react'
@@ -146,6 +147,7 @@ function TrainingWorkspace({
           ) : (
             <p>No image loaded</p>
           )}
+          <BandPanel />
         </aside>
 
         <main className="workspace-viewer">
