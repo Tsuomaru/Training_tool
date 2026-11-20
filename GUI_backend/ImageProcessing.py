@@ -6,6 +6,7 @@ def read_tiff(file_path):
             "width": image.width,
             "height": image.height,
             "bands": image.count,
+            "band_names": [image.tags(i + 1).get("name", f"Band {i + 1}") for i in range(image.count)],
             "data_type": image.dtypes,
             "crs": str(image.crs),
             "resolution": image.res,
