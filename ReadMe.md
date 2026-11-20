@@ -2,11 +2,11 @@
 
 python -m pip install Flask Pillow rasterio numpy
 
-cd GUI_backend
+cd Training_tool/GUI_backend
 
 python app.py
 
-cd GUI_Training
+cd ../GUI_Training
 
 npm install
 
