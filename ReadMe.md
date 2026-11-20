@@ -8,7 +8,7 @@ python app.py
 
 (OPEN NEW TERMINAL) 
 
-cd ../GUI_Training
+cd Training_tool/GUI_Training
 
 npm install
 
