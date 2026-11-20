@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 
 function LabelPanel() {
@@ -7,126 +6,118 @@ function LabelPanel() {
   const [newSubclassName, setNewSubclassName] = useState('')
 
   function addClass() {
-    if (!newClassName.trim()) return
+    const name = newClassName.trim()
+    if (!name) return
 
-    const newClass = {
+    setClasses(previous => [...previous, {
       id: crypto.randomUUID(),
-      name: newClassName.trim(),
+      name,
       visible: true,
       expanded: true,
       subclasses: []
-    }
-
-    setClasses([...classes, newClass])
+    }])
     setNewClassName('')
   }
 
   function addSubclass(classId) {
-    if (!newSubclassName.trim()) return
+    const name = newSubclassName.trim()
+    if (!name) return
 
-    const subclass = {
-      id: crypto.randomUUID(),
-      name: newSubclassName.trim(),
-      visible: true
-    }
-
-    setClasses(classes.map(labelClass =>
+    const subclass = { id: crypto.randomUUID(), name, visible: true }
+    setClasses(previous => previous.map(labelClass =>
       labelClass.id === classId
-        ? {
-            ...labelClass,
-            subclasses: [...labelClass.subclasses, subclass]
-          }
+        ? { ...labelClass, subclasses: [...labelClass.subclasses, subclass] }
         : labelClass
     ))
-
     setNewSubclassName('')
   }
 
   function toggleVisibility(classId, subclassId = null) {
-    setClasses(classes.map(labelClass => {
+    setClasses(previous => previous.map(labelClass => {
       if (labelClass.id !== classId) return labelClass
-
-      if (subclassId === null) {
-        return { ...labelClass, visible: !labelClass.visible }
-      }
-
+      if (subclassId === null) return { ...labelClass, visible: !labelClass.visible }
       return {
         ...labelClass,
         subclasses: labelClass.subclasses.map(subclass =>
-          subclass.id === subclassId
-            ? { ...subclass, visible: !subclass.visible }
-            : subclass
+          subclass.id === subclassId ? { ...subclass, visible: !subclass.visible } : subclass
         )
       }
     }))
   }
 
   function toggleExpanded(classId) {
-    setClasses(classes.map(labelClass =>
-      labelClass.id === classId
-        ? { ...labelClass, expanded: !labelClass.expanded }
-        : labelClass
+    setClasses(previous => previous.map(labelClass =>
+      labelClass.id === classId ? { ...labelClass, expanded: !labelClass.expanded } : labelClass
     ))
   }
 
   return (
-    <div className="label-panel">
+    <section className="label-panel">
       <h3>Label Classes</h3>
+      <form className="label-add-row" onSubmit={event => { event.preventDefault(); addClass() }}>
+        <input
+          aria-label="Class name"
+          placeholder="New class name"
+          value={newClassName}
+          onChange={event => setNewClassName(event.target.value)}
+        />
+        <button type="submit" className="label-add-button">Add</button>
+      </form>
 
-      <input
-        placeholder="Class name"
-        value={newClassName}
-        onChange={e => setNewClassName(e.target.value)}
-      />
-      <button onClick={addClass}>Add Class</button>
-
-      {classes.map(labelClass => (
-        <div key={labelClass.id}>
-
-          <div>
-            <button onClick={() => toggleExpanded(labelClass.id)}>
-              {labelClass.expanded ? '▼' : '▶'}
-            </button>
-
-            <strong>{labelClass.name}</strong>
-
-           <input
-                type="checkbox"
-                checked={labelClass.visible}
-                onChange={() => toggleVisibility(labelClass.id)}
-/>
-          </div>
-
-          {labelClass.expanded && (
-            <div style={{ paddingLeft: '20px' }}>
-
-            {labelClass.subclasses.map(subclass => (
-                <div key={subclass.id}>
-                <span>{subclass.name}</span>
-
+      {classes.length === 0 ? (
+        <p className="label-empty">No classes yet</p>
+      ) : (
+        <ul className="label-class-list">
+          {classes.map(labelClass => (
+            <li className="label-class" key={labelClass.id}>
+              <div className="label-class-heading">
+                <button
+                  type="button"
+                  className="label-expand-button"
+                  onClick={() => toggleExpanded(labelClass.id)}
+                  aria-label={`${labelClass.expanded ? 'Collapse' : 'Expand'} ${labelClass.name}`}
+                  aria-expanded={labelClass.expanded}
+                >{labelClass.expanded ? '▾' : '▸'}</button>
+                <strong title={labelClass.name}>{labelClass.name}</strong>
                 <input
-                type="checkbox"
-                checked={subclass.visible}
-                onChange={() =>
-                    toggleVisibility(labelClass.id, subclass.id)
-                }
+                  className="label-visibility"
+                  type="checkbox"
+                  checked={labelClass.visible}
+                  onChange={() => toggleVisibility(labelClass.id)}
+                  aria-label={`Show ${labelClass.name}`}
                 />
-            </div>
-            ))}
+              </div>
 
-              <input
-                placeholder="Subclass name"
-                value={newSubclassName}
-                onChange={e => setNewSubclassName(e.target.value)}
-              />
-                <button onClick={() => addSubclass(labelClass.id)}>
-                    Add Subclass
-                    </button>
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
+              {labelClass.expanded && (
+                <div className="label-subclasses">
+                  {labelClass.subclasses.map(subclass => (
+                    <div className="label-subclass" key={subclass.id}>
+                      <span title={subclass.name}>{subclass.name}</span>
+                      <input
+                        className="label-visibility"
+                        type="checkbox"
+                        checked={subclass.visible}
+                        onChange={() => toggleVisibility(labelClass.id, subclass.id)}
+                        aria-label={`Show ${subclass.name}`}
+                      />
+                    </div>
+                  ))}
+                  <form className="label-subclass-add" onSubmit={event => { event.preventDefault(); addSubclass(labelClass.id) }}>
+                    <input
+                      aria-label={`Subclass name for ${labelClass.name}`}
+                      placeholder="New subclass"
+                      value={newSubclassName}
+                      onChange={event => setNewSubclassName(event.target.value)}
+                    />
+                    <button type="submit">Add</button>
+                  </form>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   )
 }
 
