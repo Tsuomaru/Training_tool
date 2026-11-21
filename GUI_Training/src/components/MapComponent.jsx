@@ -9,8 +9,8 @@ import Draw from 'ol/interaction/Draw.js'
 import { get as getProjection } from 'ol/proj.js'
 import Projection from 'ol/proj/Projection.js'
 import 'ol/ol.css'
-import TileLayer from 'ol/layer/Tile'
-// import TileLayer from 'ol/layer/WebGLTile.js'
+// import TileLayer from 'ol/layer/Tile'
+import TileLayer from 'ol/layer/WebGLTile.js'
 import GeoTIFF from 'ol/source/GeoTIFF.js'
 
 const MapComponent = forwardRef(function MapComponent(
@@ -47,6 +47,8 @@ const MapComponent = forwardRef(function MapComponent(
     }
   }), [])
 
+  
+
   useEffect(() => {
     if (!imageData?.preview || !mapElement.current) return undefined
 
@@ -77,22 +79,36 @@ const MapComponent = forwardRef(function MapComponent(
       projection,
       interpolate: true
     })
+    // rasterExtentRef.current = extent
+    // rasterProjectionRef.current = projection
 
-    const rasterLayer = new ImageLayer({
-      source: rasterSource,
-      className: 'raster-layer'
-    })
-    rasterLayerRef.current = rasterLayer
-    rasterExtentRef.current = extent
-    rasterProjectionRef.current = projection
-
-    // Using GeoTIFF + TileLayer to allow band manupulation
-    // const source = new GeoTIFF({
-    //   source: [{ url: imageData.url }],
-    //   convertToRGB: 'auto',
-    //   transition: 0
+    // const rasterLayer = new ImageLayer({
+    //   source: rasterSource,
+    //   className: 'raster-layer'
     // })
-    // const rasterLayer = new TileLayer({ source })
+    // rasterLayerRef.current = rasterLayer
+    // rasterExtentRef.current = extent
+    // rasterProjectionRef.current = projection
+
+    //Using GeoTIFF + TileLayer to allow band manupulation
+    // const res = fetch(imageData.url, {credentials: 'include' })
+    // const blob = res.blob()
+    const source = new GeoTIFF({
+      // sources: [{ url: imageData.url }],
+      sources: [{ blob: imageData.file, min: imageData.min, max: imageData.max }],
+      convertToRGB: 'auto',
+      // normalize: false,
+      transition: 0
+    })
+    const rasterLayer = new TileLayer({ source })
+    rasterLayerRef.current = rasterLayer
+
+    source.on('change', () => {  
+      if (source.getState() === 'error') console.error(source.getError())  
+    })
+    // console.log('GeoTIFF url:', imageData.url)
+    // console.log('GeoTIFF file:', imageData.file)
+    console.log('Max:', imageData.max)
 
     const annotations = new VectorSource()
     const annotationLayer = new VectorLayer({ source: annotations })
@@ -103,22 +119,23 @@ const MapComponent = forwardRef(function MapComponent(
     const map = new Map({
       target: mapElement.current,
       layers: [rasterLayer, annotationLayer],
-      view: new View({
-        projection,
-        center: [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2],
-        extent,
-        showFullExtent: true,
-        zoom: 1,
-        minZoom: -4,
-        maxZoom: 24
-      })
+      // view: new View({
+      //   projection,
+      //   center: [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2],
+      //   extent,
+      //   showFullExtent: true,
+      //   zoom: 1,
+      //   minZoom: -4,
+      //   maxZoom: 24
+      // })
     })
+    map.setView(source.getView())
 
     map.updateSize()
     const mapSize = map.getSize()
-    if (mapSize) {
-      map.getView().fit(extent, { size: mapSize, padding: [24, 24, 24, 24] })
-    }
+    // if (mapSize) {
+    //   map.getView().fit(extent, { size: mapSize, padding: [24, 24, 24, 24] })
+    // }
     mapInstance.current = map
     setMapReady(true)
 
@@ -136,6 +153,25 @@ const MapComponent = forwardRef(function MapComponent(
       rasterProjectionRef.current = null
     }
   }, [imageData])
+
+  useEffect(() => {  
+    const layer = rasterLayerRef.current  
+    if (!layer || !mapReady) return  
+    const bandCount = Number(imageData?.bands) || 1  
+    const pick = n => Math.min(Math.max(n, 1), bandCount)  
+    layer.setStyle({  
+      color: [  
+        'array',  
+        ['/', ['band', pick(bandSelection.b)], imageData.max/2],  
+        ['/', ['band', pick(bandSelection.g)], imageData.max/2],  
+        ['/', ['band', pick(bandSelection.r)], imageData.max/2],  
+        1  
+      ],
+      gamma: 1.5,        // brightens midtones  
+      saturation: 0.3,   // boost color  
+      contrast: 0.2  
+    }) 
+  }, [bandSelection, mapReady])
 
   useEffect(() => {
     const rasterLayer = rasterLayerRef.current

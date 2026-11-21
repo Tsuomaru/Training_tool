@@ -38,7 +38,7 @@ function TrainingWorkspace({
       })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Upload failed')
-      setImageData(data)
+      setImageData({ ...data, file: file }) // append reference to the file itself (should maybe add a url if it's being stored on the backend)
       setHueInverted(false)
       setEdgeDetected(false)
       setActiveTool(null)
