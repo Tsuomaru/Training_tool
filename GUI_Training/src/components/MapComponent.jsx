@@ -97,7 +97,7 @@ const MapComponent = forwardRef(function MapComponent(
       // sources: [{ url: imageData.url }],
       sources: [{ blob: imageData.file, min: imageData.min, max: imageData.max }],
       convertToRGB: 'auto',
-      // normalize: false,
+      normalize: false,
       transition: 0
     })
     const rasterLayer = new TileLayer({ source })
@@ -162,12 +162,12 @@ const MapComponent = forwardRef(function MapComponent(
     layer.setStyle({  
       color: [  
         'array',  
-        ['/', ['band', pick(bandSelection.b)], imageData.max/2],  
-        ['/', ['band', pick(bandSelection.g)], imageData.max/2],  
-        ['/', ['band', pick(bandSelection.r)], imageData.max/2],  
+        ['/', ['band', pick(bandSelection.b)], imageData.max],  
+        ['/', ['band', pick(bandSelection.g)], imageData.max],  
+        ['/', ['band', pick(bandSelection.r)], imageData.max],  
         1  
       ],
-      gamma: 1.5,        // brightens midtones  
+      gamma: 2.2,        // brightens midtones  
       saturation: 0.3,   // boost color  
       contrast: 0.2  
     }) 
