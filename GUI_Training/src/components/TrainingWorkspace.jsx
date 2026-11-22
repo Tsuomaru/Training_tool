@@ -24,7 +24,7 @@ function TrainingWorkspace({
   const [hueInverted, setHueInverted] = useState(false)
   const [edgeDetected, setEdgeDetected] = useState(false)
   const [bandSelection, setBandSelection] = useState(defaultBandSelection(1))
-  const [bandStrengths, setBandStrengths] = useState( {r:100,g:100,b:100} )
+  const [bandStrengths, setBandStrengths] = useState( {r:0,g:0,b:0} )
   const [labelClasses, setLabelClasses] = useState([])
 
   const mapRef = useRef(null)

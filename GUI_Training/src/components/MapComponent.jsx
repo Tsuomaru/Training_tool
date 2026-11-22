@@ -15,7 +15,7 @@ import GeoTIFF from 'ol/source/GeoTIFF.js'
 
 const MapComponent = forwardRef(function MapComponent(
   { imageData, hueInverted = false, edgeDetected = false, activeTool = null,
-    bandSelection = {r:3,g:2,b:1}, bandStrengths = {r:100,g:100,b:100} },
+    bandSelection = {r:3,g:2,b:1}, bandStrengths = {r:0,g:0,b:0} },
   ref
 ) {
   const mapElement = useRef(null)
@@ -168,11 +168,11 @@ const MapComponent = forwardRef(function MapComponent(
     layer.setStyle({  
       color: [  // use 4 standard deviations above the mean as the maximum
         'array',  
-        ['/', ['band', pick(bandSelection.r)], (bandStrengths.r/100)*
+        ['/', ['band', pick(bandSelection.r)], ((100-bandStrengths.r)/100)*
                                               (imageData.mean[pick(bandSelection.r)-1] + 4*imageData.std[pick(bandSelection.r)-1]) ],  
-        ['/', ['band', pick(bandSelection.g)], (bandStrengths.g/100)*
+        ['/', ['band', pick(bandSelection.g)], ((100-bandStrengths.g)/100)*
                                               (imageData.mean[pick(bandSelection.g)-1] + 4*imageData.std[pick(bandSelection.g)-1]) ],  
-        ['/', ['band', pick(bandSelection.b)], (bandStrengths.b/100)*
+        ['/', ['band', pick(bandSelection.b)], ((100-bandStrengths.b)/100)*
                                               (imageData.mean[pick(bandSelection.b)-1] + 4*imageData.std[pick(bandSelection.b)-1]) ],  
         1  
       ]

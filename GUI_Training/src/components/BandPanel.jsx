@@ -97,7 +97,7 @@ function BandPanel({ imageData, bandSelection, onBandChange, bandStrengths, onSt
           <div class="slidecontainer">
             <input 
               type="range" 
-              min="1" max="200" 
+              min="1" max="100" 
               value={bandStrengths[channel.key]} 
               class="slider"
               onChange={e => onStrengthChange(channel.key, Number(e.target.value))}>
