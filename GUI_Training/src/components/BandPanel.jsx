@@ -76,7 +76,7 @@ const CHANNELS = [
 
 // bandSelection holds 1-based band numbers, e.g. { r: 1, g: 2, b: 3 }.
 // The selection lives in TrainingWorkspace so the map can use it too.
-function BandPanel({ imageData, bandSelection, onBandChange }) {
+function BandPanel({ imageData, bandSelection, onBandChange, bandStrengths, onStrengthChange }) {
   return (
     <div className="band-panel">
       <h3>Bands</h3>
@@ -94,6 +94,15 @@ function BandPanel({ imageData, bandSelection, onBandChange }) {
               </option>
             ))}
           </select>
+          <div class="slidecontainer">
+            <input 
+              type="range" 
+              min="1" max="200" 
+              value={bandStrengths[channel.key]} 
+              class="slider"
+              onChange={e => onStrengthChange(channel.key, Number(e.target.value))}>
+            </input>
+          </div>
         </div>
       ))}
     </div>

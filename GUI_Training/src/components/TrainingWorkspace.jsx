@@ -24,6 +24,7 @@ function TrainingWorkspace({
   const [hueInverted, setHueInverted] = useState(false)
   const [edgeDetected, setEdgeDetected] = useState(false)
   const [bandSelection, setBandSelection] = useState(defaultBandSelection(1))
+  const [bandStrengths, setBandStrengths] = useState( {r:100,g:100,b:100} )
   const [labelClasses, setLabelClasses] = useState([])
 
   const mapRef = useRef(null)
@@ -79,6 +80,11 @@ function TrainingWorkspace({
   // channel is 'r', 'g' or 'b'; bandNumber is 1-based
   function changeBand(channel, bandNumber) {
     setBandSelection(current => ({ ...current, [channel]: bandNumber }))
+  }
+
+  function changeBandStrengths(channel, strength) {
+    setBandStrengths(current => ({ ...current, [channel]: strength }))
+    // console.log("Strengths:",bandStrengths)
   }
 
   return (
@@ -303,6 +309,8 @@ function TrainingWorkspace({
                 imageData={imageData}
                 bandSelection={bandSelection}
                 onBandChange={changeBand}
+                bandStrengths={bandStrengths}
+                onStrengthChange={changeBandStrengths}
               />
             </aside>
 
@@ -317,6 +325,7 @@ function TrainingWorkspace({
                   edgeDetected={isVerificationPage && edgeDetected}
                   activeTool={activeTool}
                   bandSelection={bandSelection}
+                  bandStrengths={bandStrengths}
                 />
               ) : (
                 <p>No TIFF image imported</p>
