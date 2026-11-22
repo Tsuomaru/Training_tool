@@ -316,6 +316,7 @@ function TrainingWorkspace({
                   hueInverted={isVerificationPage && hueInverted}
                   edgeDetected={isVerificationPage && edgeDetected}
                   activeTool={activeTool}
+                  bandSelection={bandSelection}
                 />
               ) : (
                 <p>No TIFF image imported</p>
