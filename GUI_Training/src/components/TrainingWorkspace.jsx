@@ -3,6 +3,11 @@ import LabelPanel from './LabelPanel'
 import MapComponent from './MapComponent'
 import { useEffect, useRef, useState } from 'react'
 
+function defaultBandSelection(bandCount) {
+  const count = Number(bandCount) || 1
+  return { r: Math.min(3, count), g: Math.min(2, count), b: 1 }
+}
+
 function TrainingWorkspace({
   project,
   page = 'training',
@@ -15,6 +20,7 @@ function TrainingWorkspace({
   const [activeTool, setActiveTool] = useState(null)
   const [hueInverted, setHueInverted] = useState(false)
   const [edgeDetected, setEdgeDetected] = useState(false)
+  const [bandSelection, setBandSelection] = useState(defaultBandSelection(1))
   const mapRef = useRef(null)
   const isVerificationPage = page === 'verification'
 
@@ -39,6 +45,7 @@ function TrainingWorkspace({
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Upload failed')
       setImageData({ ...data, file: file }) // append reference to the file itself (should maybe add a url if it's being stored on the backend)
+      setBandSelection(defaultBandSelection(data.bands))
       setHueInverted(false)
       setEdgeDetected(false)
       setActiveTool(null)
@@ -56,6 +63,11 @@ function TrainingWorkspace({
 
   function toggleEdgeDetection() {
     setEdgeDetected(current => !current)
+  }
+
+  // channel is 'r', 'g' or 'b'; bandNumber is 1-based
+  function changeBand(channel, bandNumber) {
+    setBandSelection(current => ({ ...current, [channel]: bandNumber }))
   }
 
   return (
@@ -149,6 +161,8 @@ function TrainingWorkspace({
           )}
           <BandPanel
             imageData={imageData}
+            bandSelection={bandSelection}
+            onBandChange={changeBand}
           />
         </aside>
 
@@ -162,6 +176,7 @@ function TrainingWorkspace({
               hueInverted={isVerificationPage && hueInverted}
               edgeDetected={isVerificationPage && edgeDetected}
               activeTool={activeTool}
+              bandSelection={bandSelection}
             />
           ) : (
             <p>No TIFF image imported</p>
