@@ -110,6 +110,8 @@ const MapComponent = forwardRef(function MapComponent(
     // console.log('GeoTIFF file:', imageData.file)
     console.log('Max:', imageData.max)
     console.log('Min:', imageData.min)
+    console.log('Mean:', imageData.max)
+    console.log('Standard Deviation:', imageData.std)
 
     console.log('Max dtype:', typeof(imageData.max))
     console.log('Min dtype:', typeof(imageData.min))
@@ -164,56 +166,17 @@ const MapComponent = forwardRef(function MapComponent(
     const bandCount = Number(imageData?.bands) || 1  
     const pick = n => Math.min(Math.max(n, 1), bandCount)  
     layer.setStyle({  
-      color: [  
+      color: [  // use 4 standard deviations above the mean as the maximum
         'array',  
-        // ['/', ['band', pick(bandSelection.r)], imageData.max],  
-        // ['/', ['band', pick(bandSelection.g)], imageData.max],  
-        // ['/', ['band', pick(bandSelection.b)], imageData.max],  
-        ['/', ['band', pick(bandSelection.r)], imageData.max[pick(bandSelection.r)-1] ],  
-        ['/', ['band', pick(bandSelection.g)], imageData.max[pick(bandSelection.g)-1] ],  
-        ['/', ['band', pick(bandSelection.b)], imageData.max[pick(bandSelection.b)-1] ],  
+        ['/', ['band', pick(bandSelection.r)], imageData.mean[pick(bandSelection.r)-1] + 4*imageData.std[pick(bandSelection.r)-1] ],  
+        ['/', ['band', pick(bandSelection.g)], imageData.mean[pick(bandSelection.g)-1] + 4*imageData.std[pick(bandSelection.g)-1] ],  
+        ['/', ['band', pick(bandSelection.b)], imageData.mean[pick(bandSelection.b)-1] + 4*imageData.std[pick(bandSelection.b)-1] ],  
         1  
-      ],
-      gamma: 2.2,        // brightens midtones  
-      saturation: 0.3,   // boost color  
-      contrast: 0.2
+      ]
     }) 
     console.log("Band Selection:", bandSelection)
   }, [bandSelection, mapReady])
 
-
-  // useEffect(() => {
-  //   const layer = rasterLayerRef.current
-  //   if (!layer || !mapReady || !imageData) return
-
-  //   const bandCount = Number(imageData.bands) || 1
-  //   const pick = n => Math.min(Math.max(n, 1), bandCount)
-
-  //   // Prefer percentile values (e.g. imageData.p2 / imageData.p98) if you can compute them
-  //   const lo = 0//Number(imageData.p2 ?? imageData.min)
-  //   const hi = 3000//Number(imageData.p98 ?? imageData.max)
-  //   const range = Math.max(hi - lo, 1e-6)
-
-  //   const stretch = n => [
-  //     'clamp',
-  //     ['/', ['-', ['band', pick(n)], lo], range],
-  //     0,
-  //     1
-  //   ]
-
-  //   layer.setStyle({
-  //     color: [
-  //       'array',
-  //       stretch(bandSelection.r),
-  //       stretch(bandSelection.g),
-  //       stretch(bandSelection.b),
-  //       1
-  //     ],
-  //     gamma: 1,
-  //     saturation: 0.1,
-  //     contrast: 0.1
-  //   })
-  // }, [bandSelection, mapReady, imageData])  // imageData added, since min/max come from it
 
   useEffect(() => {
     const rasterLayer = rasterLayerRef.current
