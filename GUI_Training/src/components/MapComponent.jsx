@@ -44,16 +44,18 @@ const MapComponent = forwardRef(function MapComponent(
 
   useImperativeHandle(ref, () => ({
     undo() {
-      const feature = undoStack.current.pop()
-      if (!feature || !vectorSource.current) return
-      vectorSource.current.removeFeature(feature)
-      redoStack.current.push(feature)
+      const entry = undoStack.current.pop()
+      if (!entry || !vectorSource.current) return
+      entry.source.removeFeature(entry.feature)
+      // vectorSource.current.removeFeature(feature)
+      redoStack.current.push(entry)
     },
     redo() {
-      const feature = redoStack.current.pop()
-      if (!feature || !vectorSource.current) return
-      vectorSource.current.addFeature(feature)
-      undoStack.current.push(feature)
+      const entry = redoStack.current.pop()
+      if (!entry || !vectorSource.current) return
+      entry.source.addFeatures(entry.feature)
+      // vectorSource.current.addFeature(feature)
+      undoStack.current.push(entry)
     },
     getZoom() {
       return mapInstance.current?.getView().getZoom() ?? null
@@ -268,6 +270,8 @@ const MapComponent = forwardRef(function MapComponent(
 
     if (!drawType || !vectorSource.current) return undefined
 
+    const targetSource = drawType === 'Highlighter' ? highlightSource : vectorSource.current
+
     // use highlighter if highlighter, otherwise do normal new draw routine
     const draw = 
       drawType === 'Highlighter'
@@ -285,7 +289,7 @@ const MapComponent = forwardRef(function MapComponent(
     }
 
     draw.on('drawend', event => {
-      undoStack.current.push(event.feature)
+      undoStack.current.push({ feature: event.feature, source: targetSource })
       redoStack.current = []
     })
 
