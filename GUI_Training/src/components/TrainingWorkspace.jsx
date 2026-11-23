@@ -157,6 +157,17 @@ function TrainingWorkspace({
             >
               Highlighter
             </button>
+        
+          )}
+          {isVerificationPage && (
+            <button
+              className={activeTool === 'Eraser' ? 'tool-active' : ''}
+              onClick={() => setActiveTool(current => current === 'Eraser' ? null : 'Eraser')}
+              disabled={!imageData}
+              aria-pressed={activeTool === 'Eraser'}
+            >
+              Highlight Eraser
+            </button>
           )}
 
           <button onClick={() => mapRef.current?.undo()} disabled={!imageData}>

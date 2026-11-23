@@ -8,6 +8,7 @@ import VectorSource from 'ol/source/Vector.js'
 import Stroke from 'ol/style/Stroke.js'
 import Style from 'ol/style/Style.js'
 import Draw from 'ol/interaction/Draw.js'
+import PointerInteraction from 'ol/interaction/Pointer'
 import { get as getProjection } from 'ol/proj.js'
 import Projection from 'ol/proj/Projection.js'
 import 'ol/ol.css'
@@ -24,6 +25,16 @@ function createHighlightStyle(color = 'yellow', opacity = 0.5, width = 20) {
       lineJoin: 'round'
     })
   })
+}
+
+// helper function for the undo/redo methods; mainly to help with erasing
+function applyEntry(entry, reverse) {
+  const shouldAdd = (entry.type === 'add') !== reverse
+  if (shouldAdd) {
+    entry.source.addFeatures(entry.features)
+  } else {
+    entry.features.forEach(f => entry.source.removeFeature(f))
+  }
 }
 
 const MapComponent = forwardRef(function MapComponent(
@@ -45,15 +56,17 @@ const MapComponent = forwardRef(function MapComponent(
   useImperativeHandle(ref, () => ({
     undo() {
       const entry = undoStack.current.pop()
-      if (!entry || !vectorSource.current) return
-      entry.source.removeFeature(entry.feature)
+      if (!entry /*|| !vectorSource.current*/) return
+      applyEntry(entry, true)
+      // entry.source.removeFeature(entry.feature)
       // vectorSource.current.removeFeature(feature)
       redoStack.current.push(entry)
     },
     redo() {
       const entry = redoStack.current.pop()
-      if (!entry || !vectorSource.current) return
-      entry.source.addFeature(entry.feature)
+      if (!entry /*|| !vectorSource.current*/) return
+      applyEntry(entry, false)
+      // entry.source.addFeature(entry.feature)
       // vectorSource.current.addFeature(feature)
       undoStack.current.push(entry)
     },
@@ -113,6 +126,7 @@ const MapComponent = forwardRef(function MapComponent(
     const annotationLayer = new VectorLayer({ source: annotations })
     vectorSource.current = annotations
     undoStack.current = []
+    highlightSource.clear()
     redoStack.current = []
 
     const map = new Map({
@@ -248,13 +262,6 @@ const MapComponent = forwardRef(function MapComponent(
     })
   ).current
 
-
-    // highlightLayer.setStyle(() => 
-    //   createHighlightStyle('yellow', 0.5, 20 * mapInstance.current?.getView().getZoom())
-    // )
-
-  
-
   useEffect(() => {
     const map = mapInstance.current
     if (!map || !mapReady) return
@@ -302,7 +309,8 @@ const MapComponent = forwardRef(function MapComponent(
     }
 
     draw.on('drawend', event => {
-      undoStack.current.push({ feature: event.feature, source: targetSource })
+      // undoStack.current.push({ feature: event.feature, source: targetSource })
+      undoStack.current.push({ type: 'add', features: [event.feature], source: targetSource })
       redoStack.current = []
     })
 
@@ -312,6 +320,54 @@ const MapComponent = forwardRef(function MapComponent(
     return () => {
       map.removeInteraction(draw)
       if (drawInteraction.current === draw) drawInteraction.current = null
+    }
+  }, [activeTool, mapReady])
+
+  // Eraser draw interaction
+  useEffect(() => {
+    const map = mapInstance.current
+    if (!map || !mapReady || activeTool !== 'Eraser') return undefined
+
+    let erased = []
+
+    const eraseAt = pixel => {
+      const hits = []
+      map.forEachFeatureAtPixel(
+        pixel,
+        feature => { hits.push(feature) },
+        { layerFilter: layer => layer === highlightLayer, hitTolerance: 4 }
+      )
+      hits.forEach(feature => {
+        if (erased.includes(feature)) return
+        highlightSource.removeFeature(feature)
+        erased.push(feature)
+      })
+    }
+
+    const eraser = new PointerInteraction({
+      handleDownEvent: event => {
+        erased = []
+        eraseAt(event.pixel)
+        return true // capture the drag so the map doesn't pan
+      },
+      handleDragEvent: event => eraseAt(event.pixel),
+      handleUpEvent: () => {
+        if (erased.length) {
+          undoStack.current.push({ type: 'remove', features: erased, source: highlightSource })
+          redoStack.current = []
+        }
+        erased = []
+        return false
+      }
+    })
+
+    map.addInteraction(eraser)
+    const el = map.getTargetElement()
+    if (el) el.style.cursor = 'crosshair'
+
+    return () => {
+      map.removeInteraction(eraser)
+      if (el) el.style.cursor = ''
     }
   }, [activeTool, mapReady])
 
