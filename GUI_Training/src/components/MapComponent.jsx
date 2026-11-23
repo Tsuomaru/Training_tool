@@ -5,6 +5,8 @@ import ImageLayer from 'ol/layer/Image.js'
 import ImageStatic from 'ol/source/ImageStatic.js'
 import VectorLayer from 'ol/layer/Vector.js'
 import VectorSource from 'ol/source/Vector.js'
+import Stroke from 'ol/style/Stroke.js'
+import Style from 'ol/style/Style.js'
 import Draw from 'ol/interaction/Draw.js'
 import { get as getProjection } from 'ol/proj.js'
 import Projection from 'ol/proj/Projection.js'
@@ -12,6 +14,17 @@ import 'ol/ol.css'
 import TileLayer from 'ol/layer/Tile'
 // import TileLayer from 'ol/layer/WebGLTile.js'
 import GeoTIFF from 'ol/source/GeoTIFF.js'
+
+function createHighlightStyle(color = 'yellow', opacity = 0.5, width = 20) {
+  return new Style({
+    stroke: new Stroke({
+      color: color,
+      width: width,
+      lineCap: 'round',
+      lineJoin: 'round'
+    })
+  })
+}
 
 const MapComponent = forwardRef(function MapComponent(
   { imageData, hueInverted = false, edgeDetected = false, activeTool = null,
@@ -220,6 +233,23 @@ const MapComponent = forwardRef(function MapComponent(
     }
   }, [edgeDetected, imageData, mapReady])
 
+  // create the highlighter layer
+  const highlightSource = useRef(new VectorSource()).current
+    const highlightLayer = useRef(
+      new VectorLayer({
+        source: highlightSource,
+        style: createHighlightStyle(),
+        opacity: 0.5
+      })
+    ).current
+
+  useEffect(() => {
+    const map = mapInstance.current
+    if (!map || !mapReady) return
+    map.addLayer(highlightLayer)
+    return () => map.removeLayer(highlightLayer)
+  }, [mapReady])
+
   useEffect(() => {
     const map = mapInstance.current
     if (!map || !mapReady) return undefined
@@ -232,16 +262,29 @@ const MapComponent = forwardRef(function MapComponent(
     const drawType = {
       Point: 'Point',
       Line: 'LineString',
-      Polygon: 'Polygon'
+      Polygon: 'Polygon',
+      Highlighter: 'Highlighter'
     }[activeTool]
 
     if (!drawType || !vectorSource.current) return undefined
 
-    const draw = new Draw({ source: vectorSource.current, type: drawType })
+    // use highlighter if highlighter, otherwise do normal new draw routine
+    const draw = 
+      drawType === 'Highlighter'
+        ? new Draw({
+            source: highlightSource,
+            type: 'LineString',
+            freehand: true,
+            style: createHighlightStyle(),
+            stopClick: true,
+          })
+        : new Draw({ source: vectorSource.current, type: drawType })
+    
     draw.on('drawend', event => {
       undoStack.current.push(event.feature)
       redoStack.current = []
     })
+    
     map.addInteraction(draw)
     drawInteraction.current = draw
 
