@@ -108,13 +108,13 @@ const MapComponent = forwardRef(function MapComponent(
     })
     // console.log('GeoTIFF url:', imageData.url)
     // console.log('GeoTIFF file:', imageData.file)
-    console.log('Max:', imageData.max)
-    console.log('Min:', imageData.min)
-    console.log('Mean:', imageData.max)
-    console.log('Standard Deviation:', imageData.std)
+    // console.log('Max:', imageData.max)
+    // console.log('Min:', imageData.min)
+    // console.log('Mean:', imageData.max)
+    // console.log('Standard Deviation:', imageData.std)
 
-    console.log('Max dtype:', typeof(imageData.max))
-    console.log('Min dtype:', typeof(imageData.min))
+    // console.log('Max dtype:', typeof(imageData.max))
+    // console.log('Min dtype:', typeof(imageData.min))
 
     const annotations = new VectorSource()
     const annotationLayer = new VectorLayer({ source: annotations })
@@ -166,7 +166,7 @@ const MapComponent = forwardRef(function MapComponent(
     const bandCount = Number(imageData?.bands) || 1  
     const pick = n => Math.min(Math.max(n, 1), bandCount)  
     layer.setStyle({  
-      color: [  // use 4 standard deviations above the mean as the maximum
+      color: [  // stretches the color to 4 standard deviations above the mean (multiplied by the slider values)
         'array',  
         ['/', ['band', pick(bandSelection.r)], ((100-bandStrengths.r)/100)*
                                               (imageData.mean[pick(bandSelection.r)-1] + 4*imageData.std[pick(bandSelection.r)-1]) ],  
@@ -177,8 +177,8 @@ const MapComponent = forwardRef(function MapComponent(
         1  
       ]
     }) 
-    console.log("Band Selection:", bandSelection)
-    console.log("Band Strengths:", bandStrengths)
+    // console.log("Band Selection:", bandSelection)
+    // console.log("Band Strengths:", bandStrengths)
   }, [bandSelection, mapReady, imageData, bandStrengths])
 
 
