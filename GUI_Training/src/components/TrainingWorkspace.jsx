@@ -148,6 +148,17 @@ function TrainingWorkspace({
             Polygon
           </button>
 
+          {isVerificationPage && (
+            <button
+              className={activeTool === 'Highlighter' ? 'tool-active' : ''}
+              onClick={() => setActiveTool(current => current === 'Highlighter' ? null : 'Highlighter')}
+              disabled={!imageData}
+              aria-pressed={activeTool === 'Highlighter'}
+            >
+              Highlighter
+            </button>
+          )}
+
           <button onClick={() => mapRef.current?.undo()} disabled={!imageData}>
             Undo
           </button>
