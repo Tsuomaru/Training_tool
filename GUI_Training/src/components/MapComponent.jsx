@@ -280,11 +280,15 @@ const MapComponent = forwardRef(function MapComponent(
           })
         : new Draw({ source: vectorSource.current, type: drawType })
     
+    if (drawType === 'Highlighter') {
+      draw.getOverlay().setOpacity(0.5)
+    }
+
     draw.on('drawend', event => {
       undoStack.current.push(event.feature)
       redoStack.current = []
     })
-    
+
     map.addInteraction(draw)
     drawInteraction.current = draw
 
