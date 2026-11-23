@@ -53,7 +53,7 @@ const MapComponent = forwardRef(function MapComponent(
     redo() {
       const entry = redoStack.current.pop()
       if (!entry || !vectorSource.current) return
-      entry.source.addFeatures(entry.feature)
+      entry.source.addFeature(entry.feature)
       // vectorSource.current.addFeature(feature)
       undoStack.current.push(entry)
     },
