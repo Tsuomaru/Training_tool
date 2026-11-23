@@ -59,7 +59,7 @@ const MapComponent = forwardRef(function MapComponent(
     },
     getZoom() {
       return mapInstance.current?.getView().getZoom() ?? null
-    }
+    },
   }), [])
 
   useEffect(() => {
@@ -237,13 +237,23 @@ const MapComponent = forwardRef(function MapComponent(
 
   // create the highlighter layer
   const highlightSource = useRef(new VectorSource()).current
-    const highlightLayer = useRef(
-      new VectorLayer({
-        source: highlightSource,
-        style: createHighlightStyle(),
-        opacity: 0.5
-      })
-    ).current
+  const highlightLayer = useRef(
+    new VectorLayer({
+      source: highlightSource,
+      style: (feature, resolution) =>
+        createHighlightStyle('yellow', 0.5, 20 / resolution),
+      opacity: 0.5,
+      updateWhileAnimating: true,
+      updateWhileInteracting: true 
+    })
+  ).current
+
+
+    // highlightLayer.setStyle(() => 
+    //   createHighlightStyle('yellow', 0.5, 20 * mapInstance.current?.getView().getZoom())
+    // )
+
+  
 
   useEffect(() => {
     const map = mapInstance.current
@@ -279,10 +289,13 @@ const MapComponent = forwardRef(function MapComponent(
             source: highlightSource,
             type: 'LineString',
             freehand: true,
-            style: createHighlightStyle(),
+            style: (feature, resolution) =>
+              createHighlightStyle('yellow', 0.5, 20 / resolution),
             stopClick: true,
           })
         : new Draw({ source: vectorSource.current, type: drawType })
+
+    draw.getOverlay().set('updateWhileAnimating', true)
     
     if (drawType === 'Highlighter') {
       draw.getOverlay().setOpacity(0.5)
