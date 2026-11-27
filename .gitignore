@@ -9,3 +9,6 @@ GUI_backend/*.db
 # React
 node_modules/
 dist/
+.DS_Store
+.DS_Store
+GUI_backend/.DS_Store
