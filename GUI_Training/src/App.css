@@ -595,3 +595,110 @@
     grid-column: auto;
   }
 }
+
+
+/* Highlighter CSS */
+
+.highlighter-panel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  width: 220px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #222;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  font-size: 13px;
+}
+
+.highlighter-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  background: none;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  color: inherit;
+}
+
+.highlighter-panel-body {
+  padding: 0 10px 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.highlighter-layer-list {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.highlighter-layer {
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+}
+
+.highlighter-layer.is-active {
+  border-color: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.highlighter-layer-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.highlighter-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+}
+
+.highlighter-layer-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  position: relative;
+}
+
+.highlighter-layer-actions button {
+  flex: 1;
+  padding: 3px 6px;
+}
+
+/* Native color picker is opened by the "Color" button; keep the input itself invisible
+   but positioned under the button so the browser popup appears next to it. */
+.highlighter-color-input {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.highlighter-size {
+  display: grid;
+  gap: 4px;
+}
+
+.highlighter-size input[type='range'] {
+  width: 100%;
+}
+
+.highlighter-hint {
+  margin: 0;
+  font-size: 11px;
+  opacity: 0.7;
+}
