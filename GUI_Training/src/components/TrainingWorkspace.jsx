@@ -2,10 +2,6 @@
 import BandPanel from './BandPanel'
 import LabelPanel from './LabelPanel'
 import MapComponent from './MapComponent'
-import HighlighterPanel, {
-  DEFAULT_HIGHLIGHT_LAYERS,
-  DEFAULT_HIGHLIGHT_SIZE
-} from './HighlighterPanel'
 import { useEffect, useRef, useState } from 'react'
 
 function TrainingWorkspace({
@@ -23,17 +19,8 @@ function TrainingWorkspace({
   const [hueInverted, setHueInverted] = useState(false)
   const [edgeDetected, setEdgeDetected] = useState(false)
   const [labelClasses, setLabelClasses] = useState([])
-  const [highlightLayers, setHighlightLayers] = useState(DEFAULT_HIGHLIGHT_LAYERS)
-  const [activeHighlightId, setActiveHighlightId] = useState(DEFAULT_HIGHLIGHT_LAYERS[0].id)
-  const [highlightSize, setHighlightSize] = useState(DEFAULT_HIGHLIGHT_SIZE)
 
   const mapRef = useRef(null)
-
-  function updateHighlightLayer(id, changes) {
-    setHighlightLayers(current =>
-      current.map(layer => (layer.id === id ? { ...layer, ...changes } : layer))
-    )
-  }
 
   const isAnalysisPage = page === 'analysis'
   const isVerificationPage = page === 'verification'
@@ -169,17 +156,6 @@ function TrainingWorkspace({
               aria-pressed={activeTool === 'Highlighter'}
             >
               Highlighter
-            </button>
-        
-          )}
-          {isVerificationPage && (
-            <button
-              className={activeTool === 'Eraser' ? 'tool-active' : ''}
-              onClick={() => setActiveTool(current => current === 'Eraser' ? null : 'Eraser')}
-              disabled={!imageData}
-              aria-pressed={activeTool === 'Eraser'}
-            >
-              Highlight Eraser
             </button>
           )}
 
@@ -318,7 +294,7 @@ function TrainingWorkspace({
               <BandPanel imageData={imageData} />
             </aside>
 
-            <main className="workspace-viewer" style={{ position: 'relative' }}>
+            <main className="workspace-viewer">
               {uploading ? (
                 <p>Loading TIFF image...</p>
               ) : imageData ? (
@@ -328,22 +304,9 @@ function TrainingWorkspace({
                   hueInverted={isVerificationPage && hueInverted}
                   edgeDetected={isVerificationPage && edgeDetected}
                   activeTool={activeTool}
-                  highlightLayers={highlightLayers}
-                  activeHighlightId={activeHighlightId}
-                  highlightSize={highlightSize}
                 />
               ) : (
                 <p>No TIFF image imported</p>
-              )}
-              {imageData && !uploading && activeTool === 'Highlighter' && (
-                <HighlighterPanel
-                  layers={highlightLayers}
-                  activeId={activeHighlightId}
-                  size={highlightSize}
-                  onSelectLayer={setActiveHighlightId}
-                  onChangeLayer={updateHighlightLayer}
-                  onChangeSize={setHighlightSize}
-                />
               )}
             </main>
 

@@ -8,7 +8,6 @@ import VectorSource from 'ol/source/Vector.js'
 import Stroke from 'ol/style/Stroke.js'
 import Style from 'ol/style/Style.js'
 import Draw from 'ol/interaction/Draw.js'
-import PointerInteraction from 'ol/interaction/Pointer'
 import { get as getProjection } from 'ol/proj.js'
 import Projection from 'ol/proj/Projection.js'
 import 'ol/ol.css'
@@ -16,34 +15,20 @@ import TileLayer from 'ol/layer/Tile'
 // import TileLayer from 'ol/layer/WebGLTile.js'
 import GeoTIFF from 'ol/source/GeoTIFF.js'
 
-function createHighlightStyle(color = '#ffeb3b', width = 20) {
+function createHighlightStyle(color = 'yellow', opacity = 0.5, width = 20) {
   return new Style({
     stroke: new Stroke({
       color: color,
-      width: Math.max(1, width),
+      width: width,
       lineCap: 'round',
       lineJoin: 'round'
     })
   })
 }
 
-// Undo/redo entries hold { type: 'add' | 'remove', items: [{ feature, source }] }
-// so a single entry can span several highlight layers (e.g. one erase drag).
-function applyEntry(entry, reverse) {
-  const shouldAdd = (entry.type === 'add') !== reverse
-  entry.items.forEach(({ feature, source }) => {
-    if (shouldAdd) source.addFeature(feature)
-    else source.removeFeature(feature)
-  })
-}
-
-const DEFAULT_HIGHLIGHT_SIZE = 20 // screen pixels at the zoom level the stroke was drawn
-
 const MapComponent = forwardRef(function MapComponent(
   { imageData, hueInverted = false, edgeDetected = false, activeTool = null,
-    bandSelection = {r:1,g:2,b:3},
-    highlightLayers = [], activeHighlightId = null,
-    highlightSize = DEFAULT_HIGHLIGHT_SIZE },
+    bandSelection = {r:1,g:2,b:3} },
   ref
 ) {
   const mapElement = useRef(null)
@@ -57,52 +42,24 @@ const MapComponent = forwardRef(function MapComponent(
   const redoStack = useRef([])
   const [mapReady, setMapReady] = useState(false)
 
-  // always-current copy of the highlighter props
-  // safe to be read by Openlayers callbacks
-  const latest = useRef({})
-  latest.current = { highlightLayers, activeHighlightId, highlightSize }
-
-  
-  const highlightRegistry = useRef({})
-  highlightLayers.forEach(def => {
-    if (highlightRegistry.current[def.id]) return
-    // one VectorSource + VectorLayer per highlight color
-    const source = new VectorSource()
-    const layer = new VectorLayer({
-      source,
-      opacity: 0.5, // opacity applied to whole layer (won't get darker with overlapping highlights)
-      updateWhileAnimating: true,
-      updateWhileInteracting: true,
-      style: (feature, resolution) => {
-        const current = latest.current.highlightLayers.find(l => l.id === def.id)
-        // Get stroke size from the stroke itself (not a global layer size)
-        const mapUnits = feature.get('size') ?? DEFAULT_HIGHLIGHT_SIZE * resolution
-        return createHighlightStyle(current?.color, mapUnits / resolution)
-      }
-    })
-    highlightRegistry.current[def.id] = { source, layer }
-  })
-
   useImperativeHandle(ref, () => ({
     undo() {
       const entry = undoStack.current.pop()
-      if (!entry /*|| !vectorSource.current*/) return
-      applyEntry(entry, true)
-      // entry.source.removeFeature(entry.feature)
+      if (!entry || !vectorSource.current) return
+      entry.source.removeFeature(entry.feature)
       // vectorSource.current.removeFeature(feature)
       redoStack.current.push(entry)
     },
     redo() {
       const entry = redoStack.current.pop()
-      if (!entry /*|| !vectorSource.current*/) return
-      applyEntry(entry, false)
-      // entry.source.addFeature(entry.feature)
+      if (!entry || !vectorSource.current) return
+      entry.source.addFeatures(entry.feature)
       // vectorSource.current.addFeature(feature)
       undoStack.current.push(entry)
     },
     getZoom() {
       return mapInstance.current?.getView().getZoom() ?? null
-    },
+    }
   }), [])
 
   useEffect(() => {
@@ -156,7 +113,6 @@ const MapComponent = forwardRef(function MapComponent(
     const annotationLayer = new VectorLayer({ source: annotations })
     vectorSource.current = annotations
     undoStack.current = []
-    Object.values(highlightRegistry.current).forEach(({ source }) => source.clear())
     redoStack.current = []
 
     const map = new Map({
@@ -279,27 +235,22 @@ const MapComponent = forwardRef(function MapComponent(
     }
   }, [edgeDetected, imageData, mapReady])
 
-  // Add highlight layers (and remove when done)
+  // create the highlighter layer
+  const highlightSource = useRef(new VectorSource()).current
+    const highlightLayer = useRef(
+      new VectorLayer({
+        source: highlightSource,
+        style: createHighlightStyle(),
+        opacity: 0.5
+      })
+    ).current
+
   useEffect(() => {
     const map = mapInstance.current
-    if (!map || !mapReady) return undefined
-    const layers = Object.values(highlightRegistry.current).map(({ layer }) => layer)
-    layers.forEach(layer => map.addLayer(layer))
-    return () => layers.forEach(layer => map.removeLayer(layer))
+    if (!map || !mapReady) return
+    map.addLayer(highlightLayer)
+    return () => map.removeLayer(highlightLayer)
   }, [mapReady])
-
-  // Update highlighter visibility and colors
-  useEffect(() => {
-    highlightLayers.forEach(def => {
-      const entry = highlightRegistry.current[def.id]
-      if (!entry) return
-      entry.layer.setVisible(def.visible !== false)
-      entry.layer.changed()
-    })
-  }, [highlightLayers])
-
-  const activeHighlightVisible =
-    highlightLayers.find(l => l.id === activeHighlightId)?.visible !== false
 
   useEffect(() => {
     const map = mapInstance.current
@@ -310,52 +261,35 @@ const MapComponent = forwardRef(function MapComponent(
       drawInteraction.current = null
     }
 
-    const isHighlighter = activeTool === 'Highlighter'
-    const drawType = { 
-      Point: 'Point', 
-      Line: 'LineString', 
-      Polygon: 'Polygon' 
+    const drawType = {
+      Point: 'Point',
+      Line: 'LineString',
+      Polygon: 'Polygon',
+      Highlighter: 'Highlighter'
     }[activeTool]
 
-    let targetSource
-    if (isHighlighter) {
-      const entry = highlightRegistry.current[activeHighlightId]
-      // Don't draw onto a hidden layer; the stroke would be invisible.
-      if (!entry || !activeHighlightVisible) return undefined
-      targetSource = entry.source
-    } else {
-      if (!drawType || !vectorSource.current) return undefined
-      targetSource = vectorSource.current
+    if (!drawType || !vectorSource.current) return undefined
+
+    const targetSource = drawType === 'Highlighter' ? highlightSource : vectorSource.current
+
+    // use highlighter if highlighter, otherwise do normal new draw routine
+    const draw = 
+      drawType === 'Highlighter'
+        ? new Draw({
+            source: highlightSource,
+            type: 'LineString',
+            freehand: true,
+            style: createHighlightStyle(),
+            stopClick: true,
+          })
+        : new Draw({ source: vectorSource.current, type: drawType })
+    
+    if (drawType === 'Highlighter') {
+      draw.getOverlay().setOpacity(0.5)
     }
 
-    const draw = isHighlighter
-      ? new Draw({
-          source: targetSource,
-          type: 'LineString',
-          freehand: true,
-          stopClick: true,
-          // sketch preview: current color + current size (screen pixels)
-          style: () => {
-            const { highlightLayers: defs, activeHighlightId: id, highlightSize: size } = latest.current
-            return createHighlightStyle(defs.find(l => l.id === id)?.color, size)
-          }
-        })
-      : new Draw({ source: targetSource, type: drawType })
-
-    draw.getOverlay().set('updateWhileAnimating', true)
-    if (isHighlighter) draw.getOverlay().setOpacity(0.5)
-
     draw.on('drawend', event => {
-      if (isHighlighter) {
-        // Store this stroke's own size in map units so later size changes
-        // (and other strokes in the same layer) are unaffected.
-        const resolution = map.getView().getResolution()
-        event.feature.set('size', latest.current.highlightSize * resolution)
-      }
-      undoStack.current.push({
-        type: 'add',
-        items: [{ feature: event.feature, source: targetSource }]
-      })
+      undoStack.current.push({ feature: event.feature, source: targetSource })
       redoStack.current = []
     })
 
@@ -365,58 +299,6 @@ const MapComponent = forwardRef(function MapComponent(
     return () => {
       map.removeInteraction(draw)
       if (drawInteraction.current === draw) drawInteraction.current = null
-    }
-  }, [activeTool, mapReady, activeHighlightId, activeHighlightVisible])
-
-  // Eraser: removes highlight strokes from any visible highlight layer
-  useEffect(() => {
-    const map = mapInstance.current
-    if (!map || !mapReady || activeTool !== 'Eraser') return undefined
-
-    const entries = Object.values(highlightRegistry.current)
-    let erased = []
-
-    const eraseAt = pixel => {
-      const hits = []
-      map.forEachFeatureAtPixel(
-        pixel,
-        (feature, layer) => {
-          const entry = entries.find(e => e.layer === layer)
-          if (entry) hits.push({ feature, source: entry.source })
-        },
-        { layerFilter: layer => entries.some(e => e.layer === layer), hitTolerance: 4 }
-      )
-      hits.forEach(hit => {
-        if (erased.some(e => e.feature === hit.feature)) return
-        hit.source.removeFeature(hit.feature)
-        erased.push(hit)
-      })
-    }
-
-    const eraser = new PointerInteraction({
-      handleDownEvent: event => {
-        erased = []
-        eraseAt(event.pixel)
-        return true // capture the drag so the map doesn't pan
-      },
-      handleDragEvent: event => eraseAt(event.pixel),
-      handleUpEvent: () => {
-        if (erased.length) {
-          undoStack.current.push({ type: 'remove', items: erased })
-          redoStack.current = []
-        }
-        erased = []
-        return false
-      }
-    })
-
-    map.addInteraction(eraser)
-    const el = map.getTargetElement()
-    if (el) el.style.cursor = 'crosshair'
-
-    return () => {
-      map.removeInteraction(eraser)
-      if (el) el.style.cursor = ''
     }
   }, [activeTool, mapReady])
 
